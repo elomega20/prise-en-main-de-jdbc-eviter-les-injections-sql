@@ -7,9 +7,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Properties;
 
 public class DemoJdbc {
@@ -46,7 +46,8 @@ public class DemoJdbc {
 																								// fermer a la sortie du
 																								// bloc try
 			String nomUtilisateur = "";
-			System.out.println("Bienvenue! dans prise en main de JDBC");
+			System.out.print("Bienvenue! dans prise en main de JDBC");
+			System.out.println(" << EN evitant les injections sql>>");
 			while (true) { // ici c'est une boucle infini , tant que la connexion n'a pas reussie , on
 							// continue
 				System.out.print("Login:");
@@ -64,23 +65,36 @@ public class DemoJdbc {
 					e.printStackTrace();
 				}
 
-				String strSql = "SELECT * FROM utilisateur WHERE login='" + login + "'AND passworld='" + passworld
-						+ "'"; // pour verifier si l'utilisateur est dans la base
-				try (Statement statement = connection.createStatement();
-						ResultSet resultSet = statement.executeQuery(strSql)) { // on execute la requete
-					if (resultSet.next()) {
-						strSql = "UPDATE utilisateur SET nombreDeConnection=nombreDeConnection+1 WHERE idUser="
-								+ resultSet.getInt("idUser"); // si c'est le cas on incremente le nombre de connexion
-						try (Statement stUpdate = connection.createStatement()) {
-							stUpdate.executeUpdate(strSql);
+				String strSql = "SELECT * FROM utilisateur WHERE login=? AND passworld=?"; // pour verifier si
+																							// l'utilisateur est dans la
+																							// base
+				try (PreparedStatement statement = connection.prepareStatement(strSql)) {
+					statement.setString(1, login);
+					statement.setString(2, passworld);
+					try (ResultSet resultSet = statement.executeQuery()) {
+						if (resultSet.next()) {
+							strSql = "UPDATE utilisateur SET nombreDeConnection=nombreDeConnection+1 WHERE idUser=?"; // si
+																														// c'est
+																														// le
+																														// cas
+																														// on
+																														// incremente
+																														// le
+																														// nombre
+																														// de
+																														// connexion
+							try (PreparedStatement stUpdate = connection.prepareStatement(strSql)) {
+								stUpdate.setInt(1, resultSet.getInt("idUser"));
+								stUpdate.executeUpdate();
+							}
+							nomUtilisateur = resultSet.getString(2);
+							break;
 						}
-						nomUtilisateur = resultSet.getString(2);
-						break;
+						System.out.println("connexion echouee");
 					}
-					System.out.println("connexion echouee");
 				}
 			}
-			System.out.println(nomUtilisateur + " vous etez connecter!");
+			System.out.println(nomUtilisateur + ", vous etez connecter!");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}

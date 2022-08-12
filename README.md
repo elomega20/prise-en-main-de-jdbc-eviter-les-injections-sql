@@ -9,3 +9,5 @@ Le fichier conf.properties est le fichier de configuration de la base de donnees
 elle permet de migres d'une base(mysql , postgres , oracle) a une autre sans toucher les fichiers java.
 
 ici on n'a utiliser la classe preparedStatement au lieu de la classe Statement pour eviter les injection sql.
+
+la base de donnee utiliser est mysql.
